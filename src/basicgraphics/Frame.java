@@ -14,9 +14,10 @@ public class Frame extends JFrame {
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setVisible(true);
         setResizable(false);
         setTitle("Basic Graphics");
+        
+        setVisible(true);
     }
     
 }
