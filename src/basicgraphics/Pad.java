@@ -16,8 +16,14 @@ public class Pad extends Rectangle.Double implements GameObject {
 
     enum MovingState { STANDING, MOVING_LEFT, MOVING_RIGHT }
     
-    private int w = 100;
-    private int h = 20;
+    /**
+     * Širina reketa
+     */
+    public static final int w = 100;
+    /**
+     * Visina reketa
+     */
+    public static final int h = 20;
     
     private int dx = 10;
     
@@ -26,6 +32,13 @@ public class Pad extends Rectangle.Double implements GameObject {
     
     private Color fillColor = Color.BLACK;
     
+    /**
+     * Inicijalizuje reket na proslijeđenoj lokaciji na tabli.
+     * 
+     * @param board Tabla kojoj reket pripada.
+     * @param x x koordinata gornjeg lijevog tjemena reketa.
+     * @param y y koordinata gornjeg lijevog tjemena reketa.
+     */
     public Pad(Board board, int x, int y) {
         this.board = board;
         this.x = x;
@@ -35,18 +48,30 @@ public class Pad extends Rectangle.Double implements GameObject {
         this.state = MovingState.STANDING;
     }
     
+    /**
+     * Postavlja stanje kretanja reketa u desno.
+     */
     public void moveRight() {
         state = MovingState.MOVING_RIGHT;
     }
     
+    /**
+     * Postavlja stanje kretanja reketa u lijevo.
+     */
     public void moveLeft() {
         state = MovingState.MOVING_LEFT;
     }
     
+    /**
+     * Postavlja stanje kretanja reketa u stajanje.
+     */
     public void stopMoving() {
         state = MovingState.STANDING;
     }
     
+    /**
+     * Izvršava pomjeranje reketa u zavisnosti od stanja.
+     */
     @Override
     public void move() {
         if (state == MovingState.MOVING_RIGHT)
@@ -60,6 +85,11 @@ public class Pad extends Rectangle.Double implements GameObject {
             x = board.PANEL_WIDTH - w;
     }
     
+    /**
+     * Iscrtava reket na tabli.
+     * 
+     * @param g2 Graphics2D objekat na kome se vrši iscrtavanje.
+     */
     @Override
     public void draw(Graphics2D g2) {
         g2.setPaint(fillColor);

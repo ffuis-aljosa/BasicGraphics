@@ -1,15 +1,13 @@
 package basicgraphics;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 
 /**
@@ -18,40 +16,47 @@ import javax.swing.JPanel;
  */
 public class Board extends JPanel implements Runnable {
 
-    public final int PANEL_WIDTH = 800;
+    /**
+     * Širina table
+     */
+    public final int PANEL_WIDTH = 600;
+    /**
+     * Visina table
+     */
     public final int PANEL_HEIGHT = 600;
     
     final Color BACKGROUND_COLOR = Color.LIGHT_GRAY;
     final Thread runner;
     
-    // "Kistovi" koje ćemo da koristimo
-    float[] dash = {10f, 5f, 2f, 5f};
-    
-    final BasicStroke STROKE_DEFAULT = new BasicStroke(2);
-    final BasicStroke STROKE_TICK = new BasicStroke(5);
-    final BasicStroke STROKE_DASHED = 
-            new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 1,
-                dash, 0f);
-    
     // Bodovi u igri
     
     int upperScore, lowerScore;
+    
+    // Brojanje udara lopte zbog ubrzavanja
+    
+    int hitCounter;
     
     // Objekti u igri
     
     Ball ball;
     Pad upper, lower;
     
+    /**
+     * Podrazumjevani konstruktor. Postavlja veličinu table, boju pozadine i font,
+     * inicijalizuje početni rezultat, te objekte u igri. Inicijalizuje i pokreće
+     * radnu nit.
+     */
     public Board() {
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
         setBackground(BACKGROUND_COLOR);
         setFocusable(true);
+        setFont(getFont().deriveFont(Font.BOLD, 18f));
         
-        upperScore = lowerScore = 0;
+        upperScore = lowerScore = hitCounter = 0;
         
         ball = new Ball(this);
-        upper = new Pad(this, 0, 0);
-        lower = new Pad(this, 0, PANEL_HEIGHT - 20);
+        upper = new Pad(this, PANEL_WIDTH/2 - Pad.w/2, 0);
+        lower = new Pad(this, PANEL_WIDTH/2 - Pad.w/2, PANEL_HEIGHT - Pad.h);
         
         addKeyListener(new GameKeyAdapter());
         
@@ -59,12 +64,20 @@ public class Board extends JPanel implements Runnable {
         runner.start();
     }
     
+    /**
+     * Dodaje bod donjem igraču
+     */
     public void lowerScored() {
         lowerScore++;
+        hitCounter = 0;
     }
     
+    /**
+     * Dodaje bod gornjem igraču
+     */
     public void upperScored() {
         upperScore++;
+        hitCounter = 0;
     }
 
     @Override
@@ -73,8 +86,15 @@ public class Board extends JPanel implements Runnable {
         
         Graphics2D g2 = (Graphics2D) g;
         
+        // Savjeti pri iscrtavanju
+        
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Iscrtaj teren
+        
+        g2.drawRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+        g2.drawLine(0, PANEL_HEIGHT/2, PANEL_WIDTH, PANEL_HEIGHT/2);
         
         // Iscrtaj sve objekte
         
@@ -84,8 +104,8 @@ public class Board extends JPanel implements Runnable {
         
         // Iscrtaj rezultat
         
-        g2.drawString("" + upperScore, 150, 150);
-        g2.drawString("" + lowerScore, 150, 450);
+        g2.drawString("" + upperScore, PANEL_WIDTH/6, PANEL_HEIGHT*2/6);
+        g2.drawString("" + lowerScore, PANEL_WIDTH/6, PANEL_HEIGHT*4/6);
     }
     
     private void update() {
@@ -97,11 +117,16 @@ public class Board extends JPanel implements Runnable {
     private void detectCollision() {
         if (ball.intersects(upper) || ball.intersects(lower)) {
             ball.bouceVertical();
+            hitCounter++;
+            
+            // Svaki peti udar lopta se ubrzava
+            if (hitCounter % 5 == 0)
+                ball.speedUp();
         }
     }
 
     @Override
-    public void run() {
+    public void run() {        
         while(true) {
             update();
             detectCollision();
@@ -110,7 +135,7 @@ public class Board extends JPanel implements Runnable {
             try {
                 Thread.sleep(20);
             } catch (InterruptedException ex) {
-                Logger.getLogger(Board.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println(ex.toString());
             }
         }
     }
