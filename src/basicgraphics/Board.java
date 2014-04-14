@@ -6,8 +6,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
@@ -32,6 +34,8 @@ public class Board extends JPanel implements Runnable {
     
     int upperScore, lowerScore;
     
+    Boolean inGame;
+    
     // Brojanje udara lopte zbog ubrzavanja
     
     int hitCounter;
@@ -40,6 +44,8 @@ public class Board extends JPanel implements Runnable {
     
     Ball ball;
     Pad upper, lower;
+    
+    String winMessage;
     
     /**
      * Podrazumjevani konstruktor. Postavlja veličinu table, boju pozadine i font,
@@ -51,8 +57,10 @@ public class Board extends JPanel implements Runnable {
         setBackground(BACKGROUND_COLOR);
         setFocusable(true);
         setFont(getFont().deriveFont(Font.BOLD, 18f));
+        setDoubleBuffered(true);
         
         upperScore = lowerScore = hitCounter = 0;
+        inGame = false;
         
         ball = new Ball(this);
         upper = new Pad(this, PANEL_WIDTH/2 - Pad.w/2, 0);
@@ -61,7 +69,6 @@ public class Board extends JPanel implements Runnable {
         addKeyListener(new GameKeyAdapter());
         
         runner = new Thread(this);
-        runner.start();
     }
     
     /**
@@ -70,6 +77,9 @@ public class Board extends JPanel implements Runnable {
     public void lowerScored() {
         lowerScore++;
         hitCounter = 0;
+        
+        if (lowerScore == 5)
+            stopGame("Lower wins!");
     }
     
     /**
@@ -78,8 +88,21 @@ public class Board extends JPanel implements Runnable {
     public void upperScored() {
         upperScore++;
         hitCounter = 0;
+        
+        if (upperScore == 5)
+            stopGame("Upper wins!");
     }
 
+    public void startGame() {
+        inGame = true;
+        runner.start();
+    }
+    
+    public void stopGame(String message) {
+        inGame = false;
+        winMessage = message;
+    }
+    
     @Override
     public void paint(Graphics g) {
         super.paint(g);
@@ -106,6 +129,12 @@ public class Board extends JPanel implements Runnable {
         
         g2.drawString("" + upperScore, PANEL_WIDTH/6, PANEL_HEIGHT*2/6);
         g2.drawString("" + lowerScore, PANEL_WIDTH/6, PANEL_HEIGHT*4/6);
+        
+        // Sinhronizovanje sa grafičkom kartom
+        Toolkit.getDefaultToolkit().sync();
+        
+        // Optimizacija upotrebe RAM-a
+        g.dispose();
     }
     
     private void update() {
@@ -125,17 +154,25 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
+    long counter = 0;
+    
     @Override
     public void run() {        
         while(true) {
-            update();
-            detectCollision();
-            repaint();
-            
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException ex) {
-                System.out.println(ex.toString());
+            if (inGame) {
+                counter++;
+                update();
+                detectCollision();
+                repaint();
+
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException ex) {
+                    System.out.println(ex.toString());
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, winMessage);
+                runner.stop();
             }
         }
     }
