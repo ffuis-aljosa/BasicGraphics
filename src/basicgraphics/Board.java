@@ -9,7 +9,6 @@ import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
@@ -45,7 +44,7 @@ public class Board extends JPanel implements Runnable {
     Ball ball;
     Pad upper, lower;
     
-    String winMessage;
+    String message;
     
     /**
      * Podrazumjevani konstruktor. Postavlja veličinu table, boju pozadine i font,
@@ -59,8 +58,8 @@ public class Board extends JPanel implements Runnable {
         setFont(getFont().deriveFont(Font.BOLD, 18f));
         setDoubleBuffered(true);
         
-        upperScore = lowerScore = hitCounter = 0;
         inGame = false;
+        message = "AIR HOCKEY";
         
         ball = new Ball(this);
         upper = new Pad(this, PANEL_WIDTH/2 - Pad.w/2, 0);
@@ -69,6 +68,17 @@ public class Board extends JPanel implements Runnable {
         addKeyListener(new GameKeyAdapter());
         
         runner = new Thread(this);
+        runner.start();
+    }
+    
+    public void startGame() {
+        upperScore = lowerScore = hitCounter = 0;
+        inGame = true;
+    }
+    
+    public void stopGame(String message) {
+        inGame = false;
+        this.message = message;
     }
     
     /**
@@ -92,16 +102,6 @@ public class Board extends JPanel implements Runnable {
         if (upperScore == 5)
             stopGame("Upper wins!");
     }
-
-    public void startGame() {
-        inGame = true;
-        runner.start();
-    }
-    
-    public void stopGame(String message) {
-        inGame = false;
-        winMessage = message;
-    }
     
     @Override
     public void paint(Graphics g) {
@@ -109,32 +109,37 @@ public class Board extends JPanel implements Runnable {
         
         Graphics2D g2 = (Graphics2D) g;
         
-        // Savjeti pri iscrtavanju
+        if (inGame) {
+            // Savjeti pri iscrtavanju
         
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Iscrtaj teren
-        
-        g2.drawRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
-        g2.drawLine(0, PANEL_HEIGHT/2, PANEL_WIDTH, PANEL_HEIGHT/2);
-        
-        // Iscrtaj sve objekte
-        
-        ball.draw(g2);
-        upper.draw(g2);
-        lower.draw(g2);
-        
-        // Iscrtaj rezultat
-        
-        g2.drawString("" + upperScore, PANEL_WIDTH/6, PANEL_HEIGHT*2/6);
-        g2.drawString("" + lowerScore, PANEL_WIDTH/6, PANEL_HEIGHT*4/6);
-        
-        // Sinhronizovanje sa grafičkom kartom
-        Toolkit.getDefaultToolkit().sync();
-        
-        // Optimizacija upotrebe RAM-a
-        g.dispose();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Iscrtaj teren
+
+            g2.drawRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+            g2.drawLine(0, PANEL_HEIGHT/2, PANEL_WIDTH, PANEL_HEIGHT/2);
+
+            // Iscrtaj sve objekte
+
+            ball.draw(g2);
+            upper.draw(g2);
+            lower.draw(g2);
+
+            // Iscrtaj rezultat
+
+            g2.drawString("" + upperScore, PANEL_WIDTH/6, PANEL_HEIGHT*2/6);
+            g2.drawString("" + lowerScore, PANEL_WIDTH/6, PANEL_HEIGHT*4/6);
+
+            // Sinhronizovanje sa grafičkom kartom
+            Toolkit.getDefaultToolkit().sync();
+
+            // Optimizacija upotrebe RAM-a, 
+            g.dispose();
+        } else {
+            int messageWidth = getFontMetrics(getFont()).stringWidth(message);
+            g2.drawString(message, PANEL_WIDTH/2 - messageWidth/2, PANEL_HEIGHT/2);
+        }
     }
     
     private void update() {
@@ -154,25 +159,17 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
-    long counter = 0;
-    
     @Override
     public void run() {        
         while(true) {
-            if (inGame) {
-                counter++;
-                update();
-                detectCollision();
-                repaint();
+            update();
+            detectCollision();
+            repaint();
 
-                try {
-                    Thread.sleep(20);
-                } catch (InterruptedException ex) {
-                    System.out.println(ex.toString());
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, winMessage);
-                runner.stop();
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException ex) {
+                System.out.println(ex.toString());
             }
         }
     }

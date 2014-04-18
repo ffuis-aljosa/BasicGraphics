@@ -2,7 +2,10 @@ package basicgraphics;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
@@ -16,6 +19,8 @@ public class Frame extends JFrame {
     
     public Frame() {
         add(board);
+        setJMenuBar(initMenu());
+        
         pack();
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -23,14 +28,17 @@ public class Frame extends JFrame {
         setResizable(false);
         setTitle("Basic Graphics");
         
-        setJMenuBar(initMenu());
-        
         setVisible(true);
     }
     
-    JMenuBar initMenu() {
-        JMenuBar menu = new JMenuBar();
+    final JMenuBar initMenu() {
+        // Napravimo liniju menija
+        JMenuBar menuBar = new JMenuBar();
         
+        // Mapravimo meni
+        JMenu gameMenu = new JMenu("Game");
+        
+        // Napravimo stavku za meni
         JMenuItem newGame = new JMenuItem("New game");
         newGame.addActionListener(new ActionListener() {
 
@@ -40,9 +48,13 @@ public class Frame extends JFrame {
             }
         });
         
-        menu.add(newGame);
+        // Dodamo stavku u meni
+        gameMenu.add(newGame);
         
-        return menu;
+        // Dodamo meni u liniju menija
+        menuBar.add(gameMenu);
+        
+        return menuBar;
     }
     
 }
